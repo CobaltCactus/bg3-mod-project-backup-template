@@ -1,10 +1,13 @@
 #!/bin/bash
-# update-mod-files.bash: pull all BG3 Mod Project files into a single place for source code management
+# backup.bash: pull all BG3 Mod Project files into a single place for source code management
 # by mstephenson6, see guide at https://mod.io/g/baldursgate3/r/git-backups-for-mod-projects
 
-# TODO Look in "C:\Program Files (x86)\Steam\steamapps\common\Baldurs Gate 3\Data\Projects" and set MOD_SUBDIR_NAME
-# Example:
+set -e;
+
+# TODO Set MOD_SUBDIR_NAME here, example:
 # MOD_SUBDIR_NAME="CircleOfTheSpores_db7e15fd-b2fc-b159-4bbd-1baab34d8c3a"
+# Look in "C:\Program Files (x86)\Steam\steamapps\common\Baldurs Gate 3\Data\Projects"
+# for names of mods you have already started
 MOD_SUBDIR_NAME=""
 
 # This is the MinGW64 path to a Steam install of the toolkit
@@ -20,14 +23,22 @@ SUBDIR_LIST=(
 	"Generated/Public"
 )
 
-if [ -z "$MOD_SUBDIR_NAME" ]; then  
+if [ -z "$MOD_SUBDIR_NAME" ]; then
 	echo "MOD_SUBDIR_NAME must have a value in $(basename $BASH_SOURCE)";
 	return 1 2>/dev/null;
 	exit 1;
 fi
 
-for subdir in "${SUBDIR_LIST[@]}";
-	do mkdir -p $subdir;
-	cp -av "$BG3_DATA/$subdir/$MOD_SUBDIR_NAME" "$subdir";
+for subdir in "${SUBDIR_LIST[@]}"; do
+	rm -rf "$subdir/$MOD_SUBDIR_NAME";
+	SRC_ABS_PATH="$BG3_DATA/$subdir/$MOD_SUBDIR_NAME";
+	if [ ! -d "$SRC_ABS_PATH" ]; then
+		continue;
+	fi
+	mkdir -p $subdir;
+	cp -a "$SRC_ABS_PATH" "$subdir";
 done;
 
+git add --all
+git commit -m "Backup at `date`"
+git push
